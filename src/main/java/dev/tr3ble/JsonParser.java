@@ -11,7 +11,8 @@ import java.io.IOException;
 public class JsonParser {
 
     private final OkHttpClient client = new OkHttpClient();
-    private static final String URL = "https://obsidian-mc.ru/api/monitoring/v1/servers/3yRp2q5QG2/status/d34.gamely.pro:20712";
+    private static final String API_KEY = "API_KEY";
+    private static final String URL = "http://api.weatherapi.com/v1/current.json?key=" + API_KEY + "&q=London&aqi=no";
 
     public JsonObject fetchJsonData() throws IOException {
         Request request = new Request.Builder().url(URL).build();
@@ -26,12 +27,12 @@ public class JsonParser {
         return null;
     }
 
-    public Integer parsePlayersNum() throws IOException {
+    public String parseWeather() throws IOException {
         JsonObject jsonObject = fetchJsonData();
-        if (jsonObject != null && jsonObject.has("players")) {
-            JsonObject playersObject = jsonObject.getAsJsonObject("players");
-            if (playersObject.has("num")) {
-                return playersObject.get("num").getAsInt();
+        if (jsonObject != null && jsonObject.has("location")) {
+            JsonObject playersObject = jsonObject.getAsJsonObject("location");
+            if (playersObject.has("name")) {
+                return playersObject.get("name").getAsString();
             }
         }
         return null;

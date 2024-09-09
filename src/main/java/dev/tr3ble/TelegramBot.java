@@ -10,11 +10,11 @@ import java.io.IOException;
 
 public class TelegramBot implements LongPollingSingleThreadUpdateConsumer {
     private final TelegramClient telegramClient;
-    private final PlayerDataService playerDataService;
+    private final WeatherService weatherService;
 
-    public TelegramBot(TelegramClient telegramClient, PlayerDataService playerDataService) {
+    public TelegramBot(TelegramClient telegramClient, WeatherService weatherService) {
         this.telegramClient = telegramClient;
-        this.playerDataService = playerDataService;
+        this.weatherService = weatherService;
     }
 
     @Override
@@ -22,10 +22,10 @@ public class TelegramBot implements LongPollingSingleThreadUpdateConsumer {
         if (update.hasMessage() && update.getMessage().hasText()) {
             long chatId = update.getMessage().getChatId();
             try {
-                Integer numPlayers = playerDataService.getPlayersNum();
-                String responseText = (numPlayers != null)
-                        ? "Players: " + numPlayers
-                        : "Ошибка получения данных о игроках.";
+                String weatherInfo = weatherService.getWeather();
+                String responseText = (weatherInfo != null)
+                        ? "Город: " + weatherInfo
+                        : "Ошибка получения данных о погоде.";
 
                 SendMessage message = SendMessage.builder()
                         .chatId(chatId)
