@@ -11,11 +11,12 @@ import java.io.IOException;
 public class JsonParser {
 
     private final OkHttpClient client = new OkHttpClient();
-    private static final String API_KEY = "API_KEY";
-    private static final String URL = "http://api.weatherapi.com/v1/current.json?key=" + API_KEY + "&q=London&aqi=no";
+    private static final String API_KEY = "c725ce4ef9ab44bdacb132249240909";
+    private static final String URL = "http://api.weatherapi.com/v1/current.json?key=" + API_KEY + "&aqi=no&q=";
 
-    public JsonObject fetchJsonData() throws IOException {
-        Request request = new Request.Builder().url(URL).build();
+    public JsonObject fetchJsonData(String location) throws IOException {
+        String url = URL + location;
+        Request request = new Request.Builder().url(url).build();
         try (Response response = client.newCall(request).execute()) {
             if (response.isSuccessful() && response.body() != null) {
                 String jsonString = response.body().string();
@@ -27,13 +28,15 @@ public class JsonParser {
         return null;
     }
 
-    public String parseWeather() throws IOException {
-        JsonObject jsonObject = fetchJsonData();
+    public String parseWeather(String location) throws IOException {
+        JsonObject jsonObject = fetchJsonData(location);
         if (jsonObject != null && jsonObject.has("location")) {
-            JsonObject playersObject = jsonObject.getAsJsonObject("location");
-            if (playersObject.has("name")) {
-                return playersObject.get("name").getAsString();
-            }
+            JsonObject locationObject = jsonObject.getAsJsonObject("location");
+            JsonObject currentObject = jsonObject.getAsJsonObject("current");
+            String temperature = currentObject.get("temp_c").getAsString();
+            String condition = currentObject.getAsJsonObject("condition").get("text").getAsString();
+            String name = locationObject.get("name").getAsString();
+            return name + " " + temperature + "°C " + condition;
         }
         return null;
     }

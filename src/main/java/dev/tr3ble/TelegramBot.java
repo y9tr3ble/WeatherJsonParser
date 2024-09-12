@@ -21,30 +21,51 @@ public class TelegramBot implements LongPollingSingleThreadUpdateConsumer {
     public void consume(Update update) {
         if (update.hasMessage() && update.getMessage().hasText()) {
             long chatId = update.getMessage().getChatId();
-            try {
-                String weatherInfo = weatherService.getWeather();
-                String responseText = (weatherInfo != null)
-                        ? "Город: " + weatherInfo
-                        : "Ошибка получения данных о погоде.";
+            String messageText = update.getMessage().getText().trim();
 
-                SendMessage message = SendMessage.builder()
-                        .chatId(chatId)
-                        .text(responseText)
-                        .build();
-
-                telegramClient.execute(message);
-            } catch (TelegramApiException | IOException e) {
-                e.printStackTrace();
-                SendMessage errorMessage = SendMessage.builder()
-                        .chatId(chatId)
-                        .text("Произошла ошибка при обработке вашего запроса.")
-                        .build();
-                try {
-                    telegramClient.execute(errorMessage);
-                } catch (TelegramApiException ex) {
-                    ex.printStackTrace();
+            if (messageText.startsWith("/setlocation")) {
+                String[] parts = messageText.split(" ", 2);
+                if (parts.length == 2) {
+                    setLocationAndRespond(chatId, parts[1]);
+                } else {
+                    sendMessage(chatId, "Пожалуйста, укажите локацию. Например: /setlocation Москва");
                 }
+            } else if (!messageText.startsWith("/")) {
+                setLocationAndRespond(chatId, messageText);
+            } else {
+                sendWeatherInfo(chatId);
             }
+        }
+    }
+
+    private void setLocationAndRespond(long chatId, String newLocation) {
+        weatherService.setLocation(newLocation);
+        sendMessage(chatId, "Локация изменена на: " + newLocation);
+        sendWeatherInfo(chatId);
+    }
+
+    private void sendWeatherInfo(long chatId) {
+        try {
+            String weatherInfo = weatherService.getWeather();
+            String responseText = (weatherInfo != null)
+                    ? "Город: " + weatherService.getCurrentLocation() + "\n" + weatherInfo
+                    : "Ошибка получения данных о погоде.";
+            sendMessage(chatId, responseText);
+        } catch (IOException e) {
+            e.printStackTrace();
+            sendMessage(chatId, "Произошла ошибка при обработке вашего запроса.");
+        }
+    }
+
+    private void sendMessage(long chatId, String text) {
+        SendMessage message = SendMessage.builder()
+                .chatId(chatId)
+                .text(text)
+                .build();
+        try {
+            telegramClient.execute(message);
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
         }
     }
 }
